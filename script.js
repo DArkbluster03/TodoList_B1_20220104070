@@ -15,7 +15,7 @@ function getTodoHtml(todo, index) {
   }
   let checked = todo.status == "completed" ? "checked" : "";
   return /* html */ `
-    <li class="todo">
+    <li class="todo" draggable="true" data-index="${index}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
       <label for="${index}">
         <input id="${index}" onclick="updateStatus(this)" type="checkbox" ${checked}>
         <span class="${checked}">${todo.name}</span>
@@ -113,3 +113,38 @@ deleteAllButton.addEventListener("click", () => {
   localStorage.setItem("todos", JSON.stringify(todosJson));
   showTodos();
 });
+
+// Drag and Drop Functions
+let draggedItem = null;
+
+function dragStart(event) {
+  draggedItem = event.target;
+  event.dataTransfer.setData('text/html', draggedItem.innerHTML);
+}
+
+function dragOver(event) {
+  event.preventDefault();
+}
+
+function drop(event) {
+  event.preventDefault();
+  if (event.target.className === "todo") {
+    draggedItem.innerHTML = event.target.innerHTML;
+    event.target.innerHTML = event.dataTransfer.getData('text/html');
+    updateTodosOrder();
+  }
+}
+
+function dragEnd(event) {
+  draggedItem = null;
+}
+
+function updateTodosOrder() {
+  const todos = Array.from(document.querySelectorAll(".todo"));
+  const newTodosJson = todos.map(todo => {
+    const index = parseInt(todo.getAttribute("data-index"));
+    return todosJson[index];
+  });
+  todosJson = newTodosJson;
+  localStorage.setItem("todos", JSON.stringify(todosJson));
+}
